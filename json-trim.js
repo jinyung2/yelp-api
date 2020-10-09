@@ -4,77 +4,41 @@ const ndjson = require('ndjson');
 // YELP JSON FILE TRIM SCRIPT
 
 // some different consts for files
-const TEST_FILE = 'inventory.crud.json'
+const TEST_FILE = 'inventory.crud.json';
 const INPUT_FILE = '../yelp_academic_dataset_business.json';
-const OUTPUT_FILE = 'yelp_business_trimmed.json'
+const OUTPUT_FILE = 'yelp_business_trimmed.json';
 
-const stateCityDict = {};
-
-let container = [];
-
-const streamPromise = new Promise((res, rej) => {
-    fs.createReadStream(INPUT_FILE)
-        .pipe(ndjson.parse())
-        .on('data', (data) => {
-            if (!stateCityDict[data.state]) {
-                stateCityDict[data.state] = [data.city];
-            } else {
-                if (!stateCityDict[data.state].find(e => e == data.city)) {
-                    stateCityDict[data.state].push(data.city);
-                }
-            }
-        })
-        .on('end', () => {
-            res();
-        });
-    });
-        
-
-    // fs.createReadStream(INPUT_FILE)
-    //     .pipe(ndjson.parse())
-    //     .on('data', (data) => {
-    //         return new Promise((res, rej) => {
-    //             res(data);
-    //         }).then((data) => {
-    //             state.add(data.state);
-    //             city.add(data.city);
-    //         })
-
-                // delete fields here
-
-                //
-                // return new Promise((res, rej) => {
-                //     res(JSON.stringify(data) + '\n');
-                // })
-                // .then(() => {
-
-                // }) 
-                // .then((data) => {
-                //     fs.appendFile(OUTPUT_FILE, data, (err) => {
-                //         if (err) {
-                //             throw err;
-                //         }
-                //         console.log('data appended');
-                //     });
-                // })
-        //         .catch(err => { console.log(err) });
-        // })
-
-// streamPromise.then(() => {
-//     fs.createWriteStream('test.json')
-// }).then((data) => {
-//     console.log(data);
-// }).catch(err => {
-//     console.log(err);
-// });
-
-streamPromise.then(() => {
-    const data = JSON.stringify(stateCityDict, null, 2);
-    fs.writeFile('state-city.json', data, (err) => {
-        if (err) throw err;
-        console.log("successfully wrote file");
+// create function that represents stream
+// one line of data comes in, checks if it is Las Vegas, NV or Toronrto, ON
+// if it is gets passed through and trimmed (remove is_open, attributes.BusinessParking) 
+// written to the new output json
+fs.createReadStream(INPUT_FILE)
+.pipe(ndjson.parse())
+.on('data', (data) => {
+    return new Promise((res, rej) => {
+        if (data?.attributes?.RestaurantsPriceRange2) {
+            data.priceRange = data.attributes.RestaurantsPriceRange2;
+            delete data.is_open;
+            delete data.attributes;
+            res(data);
+        }
+    }).then((trimmedData) => { // data with is_open removed and pricerange extracted into separate property
+        if (!(trimmedData.state == "NV" && trimmedData.city == "Las Vegas") &&
+            !(trimmedData.state == "ON" && trimmedData.city == "Toronto")) {
+                delete trimmedData;
+                return;
+            } 
+            return trimmedData;
+            
     })
-}).catch(err => {
-    console.log('lol error');
-})
-// fs.writeFileSync()
+    .then((filteredData) => { // Toronto and Las Vegas
+            return JSON.stringify(filteredData);
+    }).then((data) => {
+        if (!data) {
+            return;
+        }
+        fs.appendFile(OUTPUT_FILE, data + '\n', (err) => {
+            if (err) throw err;
+        })
+    })
+});

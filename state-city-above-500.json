@@ -1,0 +1,62 @@
+{
+  "NC": {
+    "Charlotte": 10418,
+    "Huntersville": 685,
+    "Gastonia": 565,
+    "Concord": 975,
+    "Matthews": 813
+  },
+  "AZ": {
+    "Scottsdale": 9341,
+    "Mesa": 6578,
+    "Gilbert": 3744,
+    "Chandler": 4580,
+    "Tempe": 4798,
+    "Glendale": 3823,
+    "Phoenix": 20171,
+    "Surprise": 1218,
+    "Goodyear": 952,
+    "Peoria": 2081,
+    "Avondale": 744
+  },
+  "QC": {
+    "Montréal": 6980
+  },
+  "NV": {
+    "North Las Vegas": 1677,
+    "Las Vegas": 31624,
+    "Henderson": 5273
+  },
+  "IL": {
+    "Champaign": 1327
+  },
+  "ON": {
+    "Toronto": 20364,
+    "Richmond Hill": 1153,
+    "Scarborough": 1245,
+    "Markham": 1963,
+    "Mississauga": 3519,
+    "Brampton": 1147,
+    "Vaughan": 1046,
+    "Etobicoke": 842,
+    "North York": 1319
+  },
+  "AB": {
+    "Calgary": 8375
+  },
+  "PA": {
+    "Pittsburgh": 7630
+  },
+  "WI": {
+    "Madison": 3685
+  },
+  "SC": {
+    "Fort Mill": 694
+  },
+  "OH": {
+    "Cleveland": 3857,
+    "Mentor": 560,
+    "Lakewood": 563,
+    "Akron": 513
+  }
+}
