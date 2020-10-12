@@ -17,10 +17,10 @@ const BUSINESS_OUTPUT = 'business_id_map.json';
 const BUSINESS_IDS = 'business_id_map.json';
 
 const CHECKIN_INPUT = '../yelp_academic_dataset_checkin.json';
-const CHECKIN_OUTPUT = 'yelp_checkin_trimmed_2.json';
+const CHECKIN_OUTPUT = 'yelp_checkin_trimmed.json';
 
 const REVIEW_INPUT = '../yelp_academic_dataset_review.json';
-const REVIEW_OUTPUT = 'yelp_review_trimmed_2.json';
+const REVIEW_OUTPUT = 'yelp_review_trimmed.json';
 
 const TIP_INPUT = '../yelp_academic_dataset_tip.json';
 const TIP_OUTPUT = 'yelp_tip_trimmed.json';
@@ -134,6 +134,7 @@ const checkInFilter = (data) => {
 
 const reviewFilter = (data) => {
     delete data.user_id;
+    delete data.date;
     return JSON.stringify(data);
 }
 
@@ -150,7 +151,7 @@ const photosFilter = (data) => {
 
 // trimByBusinessId(BUSINESS_INPUT, BUSINESS_OUTPUT);
 // businessFilter(CHECKIN_INPUT, BUSINESS_IDS, CHECKIN_OUTPUT, checkInFilter);
-// businessFilter(REVIEW_INPUT, BUSINESS_IDS, REVIEW_OUTPUT, reviewFilter);
+businessFilter(REVIEW_INPUT, BUSINESS_IDS, REVIEW_OUTPUT, reviewFilter);
 // businessFilter(TIP_INPUT, BUSINESS_IDS, TIP_OUTPUT, tipFilter);
 // businessFilter(PHOTOS_INPUT, BUSINESS_IDS, PHOTOS_OUTPUT, photosFilter);
 

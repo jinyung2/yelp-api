@@ -8,6 +8,8 @@ const yelpRoutes = require('./routes/yelp');
 // later replcae with mongoDB_URI for connection mongodb atlas?
 const mongodb = 'mongodb://127.0.0.1:27017/yelp';
 
+mongoose.pluralize(null);
+
 // middleware for CORS stuff
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -37,8 +39,8 @@ app.use((error, req, res, next) => {
     res.status(status).json({message: message, data: data});
 })
 
-
 mongoose.connect(mongodb, { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
+    console.log("Connected to server, listening on 8080")
     app.listen(8080);
 }).catch(err => {
     console.log(err);
