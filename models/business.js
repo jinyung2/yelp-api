@@ -72,4 +72,13 @@ businessSchema.virtual('tip', {
     justOne: false
 })
 
+businessSchema.virtual('review', {
+    ref: 'Review',
+    localField: 'business_id',
+    foreignField: 'business_id',
+    justOne: false
+})
+
+
+
 module.exports = mongoose.model('Business', businessSchema);

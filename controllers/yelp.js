@@ -9,9 +9,9 @@ exports.getAllBusinesses = (req, res, next) => {
     // .populate('checkin')
     .populate({ path: 'checkin'})
     .populate('tip')
+    .populate('review')
     .exec((err, business) => {
-        console.log(business.checkin);
-        console.log(business.tip);
+        res.status(200).json({data: business});
     })
     // .then(businesses => {
     //     console.log(businesses);
