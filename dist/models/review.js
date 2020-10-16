@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
-
-const reviewSchema = new Schema({
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = require("mongoose");
+const reviewSchema = new mongoose_1.Schema({
     business_id: {
         type: String,
         required: true,
@@ -31,6 +31,6 @@ const reviewSchema = new Schema({
         type: String,
         required: true
     }
-})
-
-module.exports = mongoose.model("Review", reviewSchema);
+});
+const Review = mongoose_1.model("Review", reviewSchema);
+exports.default = Review;

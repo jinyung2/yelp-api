@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
-
-const tipSchema = new Schema({
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = require("mongoose");
+const tipSchema = new mongoose_1.Schema({
     business_id: {
         type: String,
         required: true,
@@ -15,6 +15,6 @@ const tipSchema = new Schema({
         type: Number,
         required: true
     }
-})
-
-module.exports = mongoose.model("Tip", tipSchema);
+});
+const Tip = mongoose_1.model("Tip", tipSchema);
+exports.default = Tip;

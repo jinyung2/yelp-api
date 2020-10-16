@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
-
-const photoSchema = new Schema({
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = require("mongoose");
+const photoSchema = new mongoose_1.Schema({
     business_id: {
         type: String,
         required: true,
@@ -20,5 +20,5 @@ const photoSchema = new Schema({
         required: true
     }
 });
-
-module.exports = mongoose.model("Photo", photoSchema);
+const Photo = mongoose_1.model("Photo", photoSchema);
+exports.default = Photo;
