@@ -3,3 +3,4 @@ node_modules/
 *.json
 yelp_business_trimmed.json
 scripts/
+dist/
