@@ -44,7 +44,7 @@ app.use((error: any, req: Request, res: Response, next: NextFunction) => {
 })
 
 mongoose.connect(mongodb, { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
-    console.log("Connected to server, listening on 8080")
+    console.log("Connected to server, listening on 3000")
     app.listen(3000);
 }).catch(err => {
     console.log(err);
