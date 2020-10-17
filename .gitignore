@@ -1,6 +1,4 @@
 node_modules/
 .vscode/
-*.json
-yelp_business_trimmed.json
 scripts/
 dist/
