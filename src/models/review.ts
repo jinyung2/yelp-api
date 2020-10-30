@@ -10,11 +10,10 @@ export interface IReview extends Document {
     text: String
 }
 
-const reviewSchema = new Schema({
+const reviewSchema = new Schema<IReview>({
     business_id: {
         type: String,
         required: true,
-        ref: "Business"
     },
     review_id: {
         type: String,

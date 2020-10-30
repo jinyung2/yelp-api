@@ -16,7 +16,7 @@ export interface IBusiness extends Document {
     priceRange: String
 }
 
-const businessSchema = new Schema({
+const businessSchema = new Schema<IBusiness>({
     business_id: {
         type: String,
         required: true
@@ -92,6 +92,14 @@ businessSchema.virtual('review', {
     foreignField: 'business_id',
     justOne: false
 })
+
+businessSchema.virtual('photo', {
+    ref: 'Photo',
+    localField: 'business_id',
+    foreignField: 'business_id',
+    justOne: false
+})
+
 
 
 

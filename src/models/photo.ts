@@ -7,11 +7,10 @@ export interface IPhoto extends Document {
     label: String
 }
 
-const photoSchema = new Schema({
+const photoSchema = new Schema<IPhoto>({
     business_id: {
         type: String,
         required: true,
-        ref: "Business"
     },
     photo_id: {
         type: String,

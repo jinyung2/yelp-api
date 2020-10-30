@@ -6,11 +6,10 @@ export interface ITip extends Document {
     compliement_count: Number
 }
 
-const tipSchema = new Schema({
+const tipSchema = new Schema<ITip>({
     business_id: {
         type: String,
         required: true,
-        ref: "Business"
     },
     text: {
         type: String,

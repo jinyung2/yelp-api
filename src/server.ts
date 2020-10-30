@@ -1,15 +1,13 @@
 import express, { NextFunction, Response, Request } from 'express';
 import mongoose from 'mongoose';
-import cors from 'cors';
-import helmet from 'helmet';
+import {training} from '../scripts/rf-training';
+// import cors from 'cors';
+// import helmet from 'helmet';
 
 import yelpRoutes from './routes/yelp';
 
 const app = express();
 
-
-// localhost address for my mongoDB
-// later replace with mongoDB_URI for connection mongodb atlas?
 const mongodb = 'mongodb://127.0.0.1:27017/yelp';
 
 // mongoose.pluralize();
@@ -33,10 +31,13 @@ const mongodb = 'mongodb://127.0.0.1:27017/yelp';
 // routes
 app.use('/yelp', yelpRoutes);
 
+// temporary path for running script
+app.use('/run-script', (req, res, next) => {
+    training();
+})
 
 // error handling route
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
-    console.log(error);
     const status = error.statusCode || 500;
     const message = error.message;
     const data = error.data;
@@ -46,7 +47,7 @@ app.use((error: any, req: Request, res: Response, next: NextFunction) => {
 mongoose.connect(mongodb, { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
     console.log("Connected to server, listening on 3000")
     app.listen(3000);
-}).catch(err => {
-    console.log(err);
+}).catch((err) => {
+    if (err) throw err;
 });
 

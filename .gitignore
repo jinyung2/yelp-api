@@ -2,3 +2,4 @@ node_modules/
 .vscode/
 scripts/
 dist/
+nodemon.json

@@ -5,7 +5,7 @@ export interface ICheckin extends Document {
     checkin_count: Number
 }
 
-const checkinSchema = new Schema({
+const checkinSchema = new Schema<ICheckin>({
     business_id: {
         type: String,
         required: true,

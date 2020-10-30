@@ -1,26 +1,40 @@
-import Business from '../models/business';
+import Business, { IBusiness } from '../models/business';
+import { Response, Request, NextFunction } from 'express';
+
 import Review from '../models/review';
 import Tip from '../models/tip';
 import Checkin from '../models/checkin';
-import Photos from '../models/photo';
-import { Response, Request, NextFunction } from 'express';
-    
-export class YelpController {
+import Photo from '../models/photo';
+
+import { RandomForestClassifier as RFClassifier } from 'ml-random-forest';
+
+class YelpController {
 
     constructor() { }
 
     getBusinesses(req: Request, res: Response, next: NextFunction) {
-        console.log(req.query);
-        const query = {};
-        Business.findOne({})
+        const query = {}; // list of query params supplied by user
+        Business.find({
+            // eventually populated with query params to filter
+            // ie. location, interests, budget, distance, duration
+        }).limit(1)
             .populate('checkin')
-            .populate('tip')
-            .populate('review')
-            .populate('photo')
-            .exec((err, business) => {
-                res.status(200).json({ data: business });
+            .populate('review').limit(1)
+            .exec((err, businesses: IBusiness[]) => {
+                Tip.find({business_id: businesses[0].business_id}).countDocuments().then((tip) => {
+                    console.log(tip);
+                })
+                Photo.find({business_id: businesses[0].business_id}).exec((id) => {
+                    // CODE TO BE IMPLEMENTED:
+                    
+                    // load up the model that was trained and stored to JSON
+                    // feed in the filtered list of businesses
+                    // the model will return whether the specific businesses' parameters result in a recommend or not
+                    // feed into heuristic to determine how good of a recommendation it is and return top results based on distribution
+                    // console.log("hello");
+                    res.status(200).json({ data: businesses, pid: id });
+                })
             })
-
     }
     getQueriedBusinesses(req: Request, res: Response, next: NextFunction) {
         const city = req.params.city;
@@ -57,8 +71,8 @@ export class YelpController {
     }
 
     getAllPhotos(req: Request, res: Response, next: NextFunction) {
-        Photos.find().then(photos => {
-            console.log(photos);
+        Photo.find().then(photo => {
+            console.log(photo);
         })
         // res.status(200).json()
 
