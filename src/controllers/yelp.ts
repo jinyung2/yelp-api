@@ -1,81 +1,116 @@
-import Business, { IBusiness } from '../models/business';
 import { Response, Request, NextFunction } from 'express';
+import { RandomForestClassifier as RFClassifier } from 'ml-random-forest';
 
+import Business, { IBusiness } from '../models/business';
 import Review from '../models/review';
 import Tip from '../models/tip';
 import Checkin from '../models/checkin';
 import Photo from '../models/photo';
 
-import { RandomForestClassifier as RFClassifier } from 'ml-random-forest';
+import weighted from 'weighted';
+
+interface YelpQuery {
+    interests: string,
+    city: string,
+    distance: number,
+    budget: number,
+}
 
 class YelpController {
+    classifier: RFClassifier;
+    trainSet: number[][] = [];
+    predictions: number[] = [];
 
-    constructor() { }
+    constructor() {
+        this.classifier = new RFClassifier({
+            seed: 3,
+            maxFeatures: 0.9,
+            replacement: true,
+            nEstimators: 25,
+        });
 
-    getBusinesses(req: Request, res: Response, next: NextFunction) {
-        const query = {}; // list of query params supplied by user
-        Business.find({
-            // eventually populated with query params to filter
-            // ie. location, interests, budget, distance, duration
-        }).limit(1)
-            .populate('checkin')
-            .populate('review').limit(1)
-            .exec((err, businesses: IBusiness[]) => {
-                Tip.find({business_id: businesses[0].business_id}).countDocuments().then((tip) => {
-                    console.log(tip);
-                })
-                Photo.find({business_id: businesses[0].business_id}).exec((id) => {
-                    // CODE TO BE IMPLEMENTED:
-                    
-                    // load up the model that was trained and stored to JSON
-                    // feed in the filtered list of businesses
-                    // the model will return whether the specific businesses' parameters result in a recommend or not
-                    // feed into heuristic to determine how good of a recommendation it is and return top results based on distribution
-                    // console.log("hello");
-                    res.status(200).json({ data: businesses, pid: id });
-                })
-            })
-    }
-    getQueriedBusinesses(req: Request, res: Response, next: NextFunction) {
-        const city = req.params.city;
-        Business.find({ city: city }).then(businesses => {
-            res.status(200).json({ message: "found businesses", data: businesses })
-        }).catch(err => {
-            if (!err.statusCode) {
-                err.statusCode = 500;
+        const limit = 10;
+        const cursor = Business.find().limit(limit).cursor();
+
+        let count = 1;
+
+        (async () => {
+            for (let doc = await cursor.next(); doc != null; doc = await cursor.next()) {
+                const checkin = await Checkin.findOne({ business_id: doc.business_id });
+                const tip_count = await Tip.find({ business_id: doc.business_id }).countDocuments();
+                const training = [
+                    doc.stars,
+                    doc.review_count,
+                    checkin?.toJSON().checkin_count || 0,
+                    tip_count
+                ];
+                this.trainSet.push(training);
+                // Super simple initial training, is stars > 3? then recommend
+                this.predictions.push(training[0] > 4 || training[1] > 50 ? 1 : 0);
+                console.log(`Added ${count++}/${limit} training set: \tStar Rating: ${training[0]} Review Count: ${training[1]} Checkin Count: ${training[2]} Tip Count: ${training[3]}`);
             }
+            cursor.close();
+        })().then(() => {
+            console.log('Initial training has finished.')
+            this.classifier.train(this.trainSet, this.predictions);
+        }).catch(err => {
+            console.log(`Error has occurred: \n${err}`);
+        });
+    }
+
+    getBusinesses = (req: any, res: Response, next: NextFunction) => {
+        const currentGeo = req.query.city === 'Las Vegas' ?
+            [ -115.1398, 36.1699]  : // Las Vegas
+            [ -79.3832, 43.6532 ] ; // Toronto
+        const distance = req.query.distance ? +req.query.distance : 10;
+        const query = {
+            city: req.query.city,
+            categories: new RegExp(req.query.interests.split(",").join("|"), "gi"),
+            priceRange: req.query.budget,
+            location: {
+                $geoWithin: {
+                    $centerSphere: [currentGeo, distance/3963.2]
+                }
+            }
+        };
+        let responseData: any = {
+            size: 0
+        };
+        const queryResult = Business
+        .find(query)//.limit(100)
+        .populate({path: 'tip'})
+        .populate({path: 'checkin'})
+        .exec()
+        // .then(data => data.forEach((d: any) => predictSet.push([d.business_id, d.stars, d.review_count, d.checkin_checkin_count || 0, d.tip.length || 0])))
+        .then((data) => {
+            const pred = this.classifier
+            .predict(data.map((d: any) => [d.stars, d.review_count, d.checkin.checkin_count || 0, d.tip.length || 0]))
+            return data.filter((d, i) => pred[i]);
+        }).then((trimmedData: any)=> {
+            let options: any = {};
+            trimmedData.forEach((business: any, index: number) => {
+                options[index] = 
+                business.stars * 100 + 
+                business.review_count * (business.stars > 3 ? 2 : 1) +
+                (business.tip.length || 0) * (business.stars > 3 ? 2 : 1) +
+                (business.checkin.checkin_count || 0) * 5;
+                delete business.tip;
+            })
+            while (responseData.size < (trimmedData.length > 5 ? 5 : trimmedData.length)) {
+                const key: string = weighted.select(options);
+                responseData[+key] = trimmedData[+key];
+                responseData.size++;      
+            }
+        }).then(() => {
+            res.status(200).json({data: responseData});
+        }).catch(err => {
+            console.log("Something went wrong!");
             next(err);
         })
     }
 
-
-    getAllTips(req: Request, res: Response, next: NextFunction) {
-        Tip.find().then(tips => {
-            console.log(tips);
-        })
-        // res.status(200).json()
-    }
-
-    getAllCheckins(req: Request, res: Response, next: NextFunction) {
-        Checkin.find().then(checkins => {
-            console.log(checkins);
-        })
-        // res.status(200).json()
-    }
-
-    getAllReviews(req: Request, res: Response, next: NextFunction) {
-        Review.find().then(reviews => {
-            console.log(reviews);
-        })
-        // res.status(200).json()
-    }
-
-    getAllPhotos(req: Request, res: Response, next: NextFunction) {
-        Photo.find().then(photo => {
-            console.log(photo);
-        })
-        // res.status(200).json()
-
+    updateTraining = (req: Request, res: Response, next: NextFunction) => {
+        
     }
 }
 

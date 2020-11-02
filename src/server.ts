@@ -1,6 +1,6 @@
 import express, { NextFunction, Response, Request } from 'express';
 import mongoose from 'mongoose';
-import {training} from '../scripts/rf-training';
+import {training} from '../rf/rf-classifier-training';
 // import cors from 'cors';
 // import helmet from 'helmet';
 
@@ -13,6 +13,8 @@ const mongodb = 'mongodb://127.0.0.1:27017/yelp';
 // mongoose.pluralize();
 
 // middleware for CORS stuff
+// might not be needed because NGINX handles it? needs to be confirmed
+
 // app.use((req, res, next) => {
 //     res.setHeader('Access-Control-Allow-Origin', '*');
 //     // set to only allow GET for retrieving data.
@@ -30,11 +32,6 @@ const mongodb = 'mongodb://127.0.0.1:27017/yelp';
 
 // routes
 app.use('/yelp', yelpRoutes);
-
-// temporary path for running script
-app.use('/run-script', (req, res, next) => {
-    training();
-})
 
 // error handling route
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {

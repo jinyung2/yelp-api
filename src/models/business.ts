@@ -12,8 +12,11 @@ export interface IBusiness extends Document {
     stars: Number,
     review_count: Number,
     categories: String,
-    hours?:  Object,
-    priceRange: String
+    hours?: Object,
+    priceRange: String,
+    tip?: Object,
+    checkin?: Object,
+    review?: Object,
 }
 
 const businessSchema = new Schema<IBusiness>({
@@ -41,13 +44,16 @@ const businessSchema = new Schema<IBusiness>({
         type: String,
         required: true
     },
-    latitude: {
-        type: Number,
-        required: true
-    },
-    longitude: {
-        type: Number,
-        required: true
+    location: {
+        type: {
+            type: String,
+            enum: ['Point'],
+            required: true
+        },
+        coordinates: {
+            type: [Number],
+            required: true
+        }
     },
     stars: {
         type: Number,
@@ -68,7 +74,7 @@ const businessSchema = new Schema<IBusiness>({
         type: String,
         required: true
     },
-},{toJSON: {virtuals: true}});
+}, { toJSON: { virtuals: true } });
 
 businessSchema.virtual('checkin', {
     ref: 'Checkin',
