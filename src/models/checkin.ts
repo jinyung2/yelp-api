@@ -1,8 +1,8 @@
 import { Schema, model, Document } from 'mongoose';
 
 export interface ICheckin extends Document {
-    business_id: String,
-    checkin_count: Number
+    business_id: string,
+    checkin_count: number
 }
 
 const checkinSchema = new Schema<ICheckin>({

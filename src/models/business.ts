@@ -1,27 +1,28 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, SchemaTypes } from 'mongoose';
+import { ICheckin } from './checkin';
 
 export interface IBusiness extends Document {
-    business_id: String,
-    name: String,
-    address: String,
-    city: String,
-    state: String,
-    postal_code: String,
-    latitude: Number,
-    longitude: Number,
-    stars: Number,
-    review_count: Number,
-    categories: String,
+    business_id: string,
+    name: string,
+    address: string,
+    city: string,
+    state: string,
+    postal_code: string,
+    latitude: number,
+    longitude: number,
+    stars: number,
+    review_count: number,
+    categories: string,
     hours?: Object,
-    priceRange: String,
-    tip_count: Number,
-    checkin?: Object,
+    priceRange: string,
+    tip_count: number,
+    checkin?: ICheckin,
     review?: Object,
 }
 
 const businessSchema = new Schema<IBusiness>({
     business_id: {
-        type: String,
+        type: Schema.Types.String,
         required: true
     },
     name: {
