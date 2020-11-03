@@ -23,7 +23,7 @@ class YelpController {
             nEstimators: 25,
         });
 
-        const limit = 10;
+        const limit = 1000;
         const cursor = Business.find().limit(limit).cursor();
 
         let count = 1;
