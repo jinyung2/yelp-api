@@ -1,6 +1,5 @@
 import express, { NextFunction, Response, Request } from 'express';
 import mongoose from 'mongoose';
-import {training} from '../rf/rf-classifier-training';
 // import cors from 'cors';
 // import helmet from 'helmet';
 
