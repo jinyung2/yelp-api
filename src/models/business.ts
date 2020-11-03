@@ -14,7 +14,7 @@ export interface IBusiness extends Document {
     categories: String,
     hours?: Object,
     priceRange: String,
-    tip?: Object,
+    tip_count: Number,
     checkin?: Object,
     review?: Object,
 }
