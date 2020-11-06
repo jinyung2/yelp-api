@@ -9,5 +9,9 @@ const yelpController = new YelpController();
 
 // business
 router.get('/businesses', yelpController.getBusinesses);
-router.put('/businesses/training', yelpController.updateTraining);
+router.get('/businesses/:business_id', yelpController.getBusinessInfo);
+router.post('/training', yelpController.updateTraining);
+
+
+
 export default router;

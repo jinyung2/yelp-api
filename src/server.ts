@@ -2,12 +2,16 @@ import express, { NextFunction, Response, Request } from 'express';
 import mongoose from 'mongoose';
 // import cors from 'cors';
 // import helmet from 'helmet';
-
+import path from 'path';
 import yelpRoutes from './routes/yelp';
+import bodyParser from 'body-parser';
 
 const app = express();
 
 const mongodb = 'mongodb://127.0.0.1:27017/yelp';
+
+app.use(bodyParser.json());
+app.use('/photos', express.static(path.join(__dirname,'..', 'photos')));
 
 // mongoose.pluralize();
 
@@ -28,6 +32,7 @@ const mongodb = 'mongodb://127.0.0.1:27017/yelp';
 //     // }
 //     next();
 // })
+
 
 // routes
 app.use('/yelp', yelpRoutes);

@@ -1,13 +1,13 @@
 import { Schema, model, Document } from 'mongoose';
 
 export interface IReview extends Document {
-    business_id: String,
-    review_id: String,
-    stars: Number,
-    useful: Number,
-    funny: Number,
-    cool: Number,
-    text: String
+    business_id: string,
+    review_id: string,
+    stars: number,
+    useful: number,
+    funny: number,
+    cool: number,
+    text: string
 }
 
 const reviewSchema = new Schema<IReview>({

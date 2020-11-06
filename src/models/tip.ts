@@ -1,9 +1,9 @@
 import { Schema, model, Document } from 'mongoose';
 
 export interface ITip extends Document {
-    business_id: String,
-    text: String,
-    compliement_count: Number
+    business_id: string,
+    text: string,
+    compliement_count: number
 }
 
 const tipSchema = new Schema<ITip>({
