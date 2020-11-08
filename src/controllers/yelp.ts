@@ -1,22 +1,21 @@
-import { Response, Request, NextFunction, json } from 'express';
+import { Response, NextFunction } from 'express';
 import { RandomForestClassifier as RFClassifier } from 'ml-random-forest';
 
 import Business, { IBusiness } from '../models/business';
 import Review, { IReview } from '../models/review';
 import Tip, { ITip } from '../models/tip';
 import Checkin, { ICheckin } from '../models/checkin';
-import Photo, {IPhoto} from '../models/photo';
+import Photo, { IPhoto } from '../models/photo';
 
 import weighted from 'weighted';
-import path from 'path';
 import Sentiment from 'sentiment';
+import Training, { ITraining } from '../models/training';
+
 
 class YelpController {
     classifier: RFClassifier;
-    trainSet: number[][] = [];
-    predictions: number[] = [];
     sentiment = new Sentiment();
-
+    
     constructor() {
         this.classifier = new RFClassifier({
             seed: 3,
@@ -25,33 +24,49 @@ class YelpController {
             nEstimators: 25,
         });
         
-
-        const limit = 50;
+        
+        const limit = 100;
         const cursor = Business.find().limit(limit).cursor();
-
+        
         let count = 1;
-
-        (async () => {
-            for (let doc = await cursor.next(); doc != null; doc = await cursor.next()) {
-                const checkin = await Checkin.findOne({ business_id: doc.business_id });
-                const tip_count = await Tip.find({ business_id: doc.business_id }).countDocuments();
-                const training = [
-                    doc.stars,
-                    doc.review_count,
-                    checkin?.toJSON().checkin_count || 0,
-                    tip_count
-                ];
-                this.trainSet.push(training);
-                // Super simple initial training, is stars > 3? then recommend
-                this.predictions.push(training[0] >= 4 || training[1] >= 50 ? 1 : 0);
-                console.log(`Added ${count++}/${limit} training set: \tStar Rating: ${training[0]}  \tReview Count: ${training[1]}  \tCheckin Count: ${training[2]}  \tTip Count: ${training[3]}`);
+        Training.findOne().exec().then((training: any) => {
+            if (!training?.trainingSet.length) {
+                let trainSet: number[][] = [];
+                let predictions: number[] = [];
+                (async () => {
+                    for (let doc = await cursor.next(); doc != null; doc = await cursor.next()) {
+                        const checkin = await Checkin.findOne({ business_id: doc.business_id });
+                        const tip_count = await Tip.find({ business_id: doc.business_id }).countDocuments();
+                        const training = [
+                            doc.stars,
+                            doc.review_count,
+                            checkin?.toJSON().checkin_count || 0,
+                            tip_count
+                        ];
+                        trainSet.push(training);
+                        // Super simple initial training, is stars > 3? then recommend
+                        predictions.push(training[0] >= 4 || training[1] >= 50 ? 1 : 0);
+                        console.log(`Added ${count++}/${limit} training set: \tStar Rating: ${training[0]}  \tReview Count: ${training[1]}  \tCheckin Count: ${training[2]}  \tTip Count: ${training[3]}`);
+                    }
+                    cursor.close();
+                })().then(() => {
+                    this.classifier.train(trainSet, predictions);
+                }).then(() => {
+                    console.log('Initial training has finished.')
+                        Training.create({
+                            trainingSet: trainSet,
+                            predictions: predictions
+                        }, (_, res) => {
+                            console.log("Successfully created trainingSet, predictions Document");
+                        })
+                    })
+                    .catch(err => {
+                        console.log(`Error has occurred: \n${err}`);
+                    });
+            } else {
+                this.classifier.train(training.trainingSet, training.predictions);
+                console.log("Training from training collection complete.")
             }
-            cursor.close();
-        })().then(() => {
-            console.log('Initial training has finished.')
-            this.classifier.train(this.trainSet, this.predictions);
-        }).catch(err => {
-            console.log(`Error has occurred: \n${err}`);
         });
     }
 
@@ -67,11 +82,11 @@ class YelpController {
      * better average rating results in a higher quality of reviews and tips
      * checkins are generally considered always good, repeat customers
      * 
-     * @param req query of city, interests, budget, distance
-     * @param res JSON data with <=5 recommendations
+     * @param req query of city, interests, budget, distance, duration
+     * @param res JSON data with 1~10 recommendations (1~5 if duration == 1, 1~10 if duration == 2)
      * @param next ???
      */
-    getBusinesses = (req: any, res: Response, next: NextFunction) => {
+    getRecommendation = (req: any, res: Response, next: NextFunction) => {
         const currentGeo = req.query.city === 'Las Vegas' ?
             [-115.1398, 36.1699] : // Las Vegas
             [-79.3832, 43.6532]; // Toronto
@@ -122,8 +137,27 @@ class YelpController {
             })
     }
 
+    /**
+     * Pulls from training collection the trainingSet and prediction set 
+     * and appends the new trainigSet and prediction set and re-trains
+     * the classfier.
+     * @param req body should contain trainingSet and predictions
+     * @param res responds with message indicating success
+     */
     updateTraining = (req: any, res: Response, next: NextFunction) => {
-        console.log(req.body);
+        Training.findOne().then((training: ITraining| null) => {
+            if (training) {
+                training.trainingSet = [...req.body.trainingSet, ...training.trainingSet];
+                training.predictions = [...req.body.predictions, ...training.predictions];
+                // performs the new training here based on appended set
+                this.classifier.train(training.trainingSet, training.predictions);
+
+                training.save((err, message) => {
+                    if (err) throw err;
+                    console.log(message);
+                });
+            } 
+        })        
     }
 
 
@@ -136,16 +170,16 @@ class YelpController {
      * @param next 
      */
     getBusinessInfo = (req: any, res: Response, next: NextFunction) => {
-        Photo.find({business_id: req.params.business_id}).exec().then((photos: any) => {
-            Review.find({business_id: req.params.business_id, stars: {$gt: 3.5}}).then((reviews: any) => {
-                Tip.find({business_id: req.params.business_id}).then((tips: any) => {
+        Photo.find({ business_id: req.params.business_id }).exec().then((photos: any) => {
+            Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 } }).then((reviews: any) => {
+                Tip.find({ business_id: req.params.business_id }).then((tips: any) => {
                     // grab the review and tip with the best sentiment score
                     res.status(200).json({
                         photoIds: photos.map((p: IPhoto) => p.photo_id),
-                        reviews: reviews.reduce((best: IReview, review: IReview) => 
-                        best = this.sentiment.analyze(best.text).comparative > this.sentiment.analyze(review.text).comparative ? best : review),
-                        tips: tips.reduce((best: ITip, tip: ITip) => 
-                        best = this.sentiment.analyze(best.text).comparative > this.sentiment.analyze(tip.text).comparative ? best : tip)
+                        reviews: reviews.reduce((best: IReview, review: IReview) =>
+                            best = this.sentiment.analyze(best.text).comparative > this.sentiment.analyze(review.text).comparative ? best : review),
+                        tips: tips.reduce((best: ITip, tip: ITip) =>
+                            best = this.sentiment.analyze(best.text).comparative > this.sentiment.analyze(tip.text).comparative ? best : tip)
                     })
                 })
             })
