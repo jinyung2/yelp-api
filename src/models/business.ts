@@ -22,57 +22,57 @@ export interface IBusiness extends Document {
 
 const businessSchema = new Schema<IBusiness>({
     business_id: {
-        type: Schema.Types.String,
+        type: SchemaTypes.String,
         required: true
     },
     name: {
-        type: String,
+        type: SchemaTypes.String,
         required: true
     },
     address: {
-        type: String,
+        type: SchemaTypes.String,
         required: true
     },
     city: {
-        type: String,
+        type: SchemaTypes.String,
         required: true
     },
     state: {
-        type: String,
+        type: SchemaTypes.String,
         required: true
     },
     postal_code: {
-        type: String,
+        type: SchemaTypes.String,
         required: true
     },
     location: {
         type: {
-            type: String,
+            type: SchemaTypes.String,
             enum: ['Point'],
             required: true
         },
         coordinates: {
-            type: [Number],
+            type: [SchemaTypes.Number],
             required: true
         }
     },
     stars: {
-        type: Number,
+        type: SchemaTypes.Number,
         required: true
     },
     review_count: {
-        type: Number,
+        type: SchemaTypes.Number,
         required: true
     },
     categories: {
-        type: String,
+        type: SchemaTypes.String,
         required: true
     },
     hours: {
         type: Object,
     },
     priceRange: {
-        type: String,
+        type: SchemaTypes.String,
         required: true
     },
 }, { toJSON: { virtuals: true } });

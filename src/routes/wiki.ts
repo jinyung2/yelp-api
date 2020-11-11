@@ -7,7 +7,7 @@ const router = Router();
 const wikiController = new WikiController();
 
 // business
-router.get('/', wikiController.getArticle);
+router.get('/:search', wikiController.getArticle);
 
 
 

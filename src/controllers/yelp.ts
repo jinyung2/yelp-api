@@ -11,7 +11,6 @@ import weighted from 'weighted';
 import Sentiment from 'sentiment';
 import Training, { ITraining } from '../models/training';
 
-
 class YelpController {
     classifier: RFClassifier;
     sentiment = new Sentiment();
@@ -19,13 +18,12 @@ class YelpController {
     constructor() {
         this.classifier = new RFClassifier({
             seed: 3,
-            maxFeatures: 0.9,
+            maxFeatures: 0.8,
             replacement: true,
-            nEstimators: 25,
+            nEstimators: 50,
         });
         
-        
-        const limit = 100;
+        const limit = 50;
         const cursor = Business.find().limit(limit).cursor();
         
         let count = 1;
@@ -102,13 +100,11 @@ class YelpController {
             }
         };
 
-        let queriedData;
         const queryResult = Business
             .find(query)
             .populate({ path: 'checkin' })
             .exec()
             .then((data) => {
-                queriedData = data;
                 const pred = this.classifier.predict(data.map((d: any) => [d.stars, d.review_count, d.tip_count, d.checkin!.checkin_count]))
                 return data.filter((_, i) => pred[i]);
             })
@@ -145,16 +141,16 @@ class YelpController {
      * @param res responds with message indicating success
      */
     updateTraining = (req: any, res: Response, next: NextFunction) => {
-        Training.findOne().then((training: ITraining| null) => {
+        Training.findOne().then((training: ITraining | null) => {
             if (training) {
                 training.trainingSet = [...req.body.trainingSet, ...training.trainingSet];
                 training.predictions = [...req.body.predictions, ...training.predictions];
                 // performs the new training here based on appended set
                 this.classifier.train(training.trainingSet, training.predictions);
 
-                training.save((err, message) => {
+                training.save((err, data) => {
                     if (err) throw err;
-                    console.log(message);
+                    res.status(201).json({message: "Updated training data and retrained classifier.", data: data})
                 });
             } 
         })        
@@ -164,6 +160,7 @@ class YelpController {
     /**
      * Retrieves photo, tips and review for given business id param.
      * Review and tip is evaluated via sentiment library to determine positivity score.
+     * Review and tip is served in a weighted random distribution.
      * 
      * @param req params supplied with id (business_id)
      * @param res responds with chosen review, tip, and photo
@@ -172,14 +169,17 @@ class YelpController {
     getBusinessInfo = (req: any, res: Response, next: NextFunction) => {
         Photo.find({ business_id: req.params.business_id }).exec().then((photos: any) => {
             Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 } }).then((reviews: any) => {
-                Tip.find({ business_id: req.params.business_id }).then((tips: any) => {
-                    // grab the review and tip with the best sentiment score
+                Tip.find({ business_id: req.params.business_id }).then((tips: any[]) => {
+                    // grab the review and tip with the best sentiment score, perform weighted random
+                    let tipsObj: {[index: number]: number} = {};
+                    let reviewsObj: {[index: number]: number} = {};
+                    tips.forEach((tip: ITip, index: number) => tipsObj[index] = this.sentiment.analyze(tip.text).comparative);                    
+                    reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative);
+
                     res.status(200).json({
                         photoIds: photos.map((p: IPhoto) => p.photo_id),
-                        reviews: reviews.reduce((best: IReview, review: IReview) =>
-                            best = this.sentiment.analyze(best.text).comparative > this.sentiment.analyze(review.text).comparative ? best : review),
-                        tips: tips.reduce((best: ITip, tip: ITip) =>
-                            best = this.sentiment.analyze(best.text).comparative > this.sentiment.analyze(tip.text).comparative ? best : tip)
+                        review: reviews[+weighted.select(reviewsObj)],
+                        tip: tips[+weighted.select(tipsObj)]
                     })
                 })
             })

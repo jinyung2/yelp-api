@@ -1,10 +1,10 @@
 import { Schema, model, Document } from 'mongoose';
 
 export interface IPhoto extends Document {
-    business_id: String,
-    photo_id: String,
-    caption: String,
-    label: String
+    business_id: string,
+    photo_id: string,
+    caption: string,
+    label: string
 }
 
 const photoSchema = new Schema<IPhoto>({
