@@ -92,7 +92,7 @@ class YelpController {
         const query = {
             city: req.query.city,
             categories: new RegExp(req.query.interests.split(",").join("|"), "gi"),
-            priceRange: req.query.budget,
+            priceRange: {$lte: req.query.budget},
             location: {
                 $geoWithin: {
                     $centerSphere: [currentGeo, distance / 3963.2]
