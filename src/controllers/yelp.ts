@@ -128,7 +128,8 @@ class YelpController {
             }).then((data) => {
                 res.status(200).json({ data: [...data] });
             }).catch(err => {
-                console.log("Something went wrong!");
+                err.statusCode = 401;
+                err.message = "There was an error in your API call.";
                 next(err);
             })
     }
