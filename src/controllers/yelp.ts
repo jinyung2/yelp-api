@@ -14,7 +14,7 @@ import Training, { ITraining } from '../models/training';
 class YelpController {
     classifier: RFClassifier;
     sentiment = new Sentiment();
-    
+
     constructor() {
         this.classifier = new RFClassifier({
             seed: 3,
@@ -22,10 +22,10 @@ class YelpController {
             replacement: true,
             nEstimators: 50,
         });
-        
+
         const limit = 50;
         const cursor = Business.find().limit(limit).cursor();
-        
+
         let count = 1;
         Training.findOne().exec().then((training: any) => {
             if (!training?.trainingSet.length) {
@@ -51,13 +51,13 @@ class YelpController {
                     this.classifier.train(trainSet, predictions);
                 }).then(() => {
                     console.log('Initial training has finished.')
-                        Training.create({
-                            trainingSet: trainSet,
-                            predictions: predictions
-                        }, (_, res) => {
-                            console.log("Successfully created trainingSet, predictions Document");
-                        })
+                    Training.create({
+                        trainingSet: trainSet,
+                        predictions: predictions
+                    }, (_, res) => {
+                        console.log("Successfully created trainingSet, predictions Document");
                     })
+                })
                     .catch(err => {
                         console.log(`Error has occurred: \n${err}`);
                     });
@@ -150,10 +150,10 @@ class YelpController {
 
                 training.save((err, data) => {
                     if (err) throw err;
-                    res.status(201).json({message: "Updated training data and retrained classifier.", data: data})
+                    res.status(201).json({ message: "Updated training data and retrained classifier.", data: data })
                 });
-            } 
-        })        
+            }
+        })
     }
 
 
@@ -171,15 +171,25 @@ class YelpController {
             Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 } }).then((reviews: any) => {
                 Tip.find({ business_id: req.params.business_id }).then((tips: any[]) => {
                     // grab the review and tip with the best sentiment score, perform weighted random
-                    let tipsObj: {[index: number]: number} = {};
-                    let reviewsObj: {[index: number]: number} = {};
-                    tips.forEach((tip: ITip, index: number) => tipsObj[index] = this.sentiment.analyze(tip.text).comparative);                    
-                    reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative);
+                    let tipsObj: { [index: number]: number } = {};
+                    let reviewsObj: { [index: number]: number } = {};
+                    let tip;
+                    let review;
+                    if (tips.length > 0) {
+                        tips.forEach((tip: ITip, index: number) => {tipsObj[index] = this.sentiment.analyze(tip.text).comparative + 0.000001});
+                        tip = tips[+weighted.select(tipsObj)];
+                    }
+                    if (reviews.length > 0) {
+                        reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative + 0.000001);
+                        review = reviews[+weighted.select(reviewsObj)]
+                    }
+                    console.log(tipsObj);
+                    console.log(reviewsObj);
 
                     res.status(200).json({
                         photoIds: photos.map((p: IPhoto) => p.photo_id),
-                        review: reviews[+weighted.select(reviewsObj)],
-                        tip: tips[+weighted.select(tipsObj)]
+                        review: review,
+                        tip: tip
                     })
                 })
             })
