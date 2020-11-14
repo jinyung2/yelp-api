@@ -103,6 +103,7 @@ class YelpController {
         const queryResult = Business
             .find(query)
             .populate({ path: 'checkin' })
+            .populate({ path: 'photo', limit: 1})
             .exec()
             .then((data) => {
                 const pred = this.classifier.predict(data.map((d: any) => [d.stars, d.review_count, d.tip_count, d.checkin!.checkin_count]))
