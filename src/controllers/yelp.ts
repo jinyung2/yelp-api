@@ -10,6 +10,7 @@ import Training, { ITraining } from '../models/training';
 
 import weighted from 'weighted';
 import Sentiment from 'sentiment';
+import { exception } from 'console';
 
 class YelpController {
     classifier: RFClassifier;
@@ -88,7 +89,7 @@ class YelpController {
         const currentGeo = req.query.city === 'Las Vegas' ?
             [-115.1398, 36.1699] : // Las Vegas
             [-79.3832, 43.6532]; // Toronto
-        const distance = req.query.distance ? +req.query.distance : 10;
+        const distance = +req.query.distance;
         const query = {
             city: req.query.city,
             categories: new RegExp(req.query.interests.split(",").join("|"), "gi"),
@@ -106,6 +107,9 @@ class YelpController {
             .populate({ path: 'checkin' })
             .exec()
             .then((data) => {
+                if (data.length === 0) {
+                    throw new Error('Search returned no results.');
+                }
                 const pred = this.classifier.predict(data.map((d: any) => [d.stars, d.review_count, d.tip_count, d.checkin!.checkin_count]))
                 return data.filter((_, i) => pred[i]);
             })
@@ -131,7 +135,6 @@ class YelpController {
             }).catch(err => {
                 console.log(err);
                 err.statusCode = 401;
-                err.message = "There was an error in your API call.";
                 next(err);
             })
     }
