@@ -6,10 +6,10 @@ import Review, { IReview } from '../models/review';
 import Tip, { ITip } from '../models/tip';
 import Checkin, { ICheckin } from '../models/checkin';
 import Photo, { IPhoto } from '../models/photo';
+import Training, { ITraining } from '../models/training';
 
 import weighted from 'weighted';
 import Sentiment from 'sentiment';
-import Training, { ITraining } from '../models/training';
 
 class YelpController {
     classifier: RFClassifier;
@@ -92,7 +92,7 @@ class YelpController {
         const query = {
             city: req.query.city,
             categories: new RegExp(req.query.interests.split(",").join("|"), "gi"),
-            priceRange: {$lte: req.query.budget},
+            priceRange: { $lte: req.query.budget },
             location: {
                 $geoWithin: {
                     $centerSphere: [currentGeo, distance / 3963.2]
@@ -100,10 +100,10 @@ class YelpController {
             }
         };
 
-        const queryResult = Business
+        Business
             .find(query)
+            .populate({ path: 'photo', model: Photo })
             .populate({ path: 'checkin' })
-            .populate({ path: 'photo', limit: 1})
             .exec()
             .then((data) => {
                 const pred = this.classifier.predict(data.map((d: any) => [d.stars, d.review_count, d.tip_count, d.checkin!.checkin_count]))
@@ -129,6 +129,7 @@ class YelpController {
             }).then((data) => {
                 res.status(200).json({ data: [...data] });
             }).catch(err => {
+                console.log(err);
                 err.statusCode = 401;
                 err.message = "There was an error in your API call.";
                 next(err);
@@ -169,30 +170,24 @@ class YelpController {
      * @param next 
      */
     getBusinessInfo = (req: any, res: Response, next: NextFunction) => {
-        Photo.find({ business_id: req.params.business_id }).exec().then((photos: any) => {
-            Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 } }).then((reviews: any) => {
-                Tip.find({ business_id: req.params.business_id }).then((tips: any[]) => {
-                    // grab the review and tip with the best sentiment score, perform weighted random
-                    let tipsObj: { [index: number]: number } = {};
-                    let reviewsObj: { [index: number]: number } = {};
-                    let tip;
-                    let review;
-                    if (tips.length > 0) {
-                        tips.forEach((tip: ITip, index: number) => {tipsObj[index] = this.sentiment.analyze(tip.text).comparative + 0.000001});
-                        tip = tips[+weighted.select(tipsObj)];
-                    }
-                    if (reviews.length > 0) {
-                        reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative + 0.000001);
-                        review = reviews[+weighted.select(reviewsObj)]
-                    }
-                    console.log(tipsObj);
-                    console.log(reviewsObj);
-
-                    res.status(200).json({
-                        photoIds: photos.map((p: IPhoto) => p.photo_id),
-                        review: review,
-                        tip: tip
-                    })
+        Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 } }).exec().then((reviews: any) => {
+            Tip.find({ business_id: req.params.business_id }).then((tips: any[]) => {
+                // grab the review and tip with the best sentiment score, perform weighted random
+                let tipsObj: { [index: number]: number } = {};
+                let reviewsObj: { [index: number]: number } = {};
+                let tip;
+                let review;
+                if (tips.length > 0) {
+                    tips.forEach((tip: ITip, index: number) => { tipsObj[index] = this.sentiment.analyze(tip.text).comparative + 0.000001 });
+                    tip = tips[+weighted.select(tipsObj)];
+                }
+                if (reviews.length > 0) {
+                    reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative + 0.000001);
+                    review = reviews[+weighted.select(reviewsObj)]
+                }
+                res.status(200).json({
+                    review: review,
+                    tip: tip
                 })
             })
         })

@@ -1,4 +1,4 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, SchemaTypes, model, Document } from 'mongoose';
 
 export interface IPhoto extends Document {
     business_id: string,
@@ -9,19 +9,19 @@ export interface IPhoto extends Document {
 
 const photoSchema = new Schema<IPhoto>({
     business_id: {
-        type: String,
+        type: SchemaTypes.String,
         required: true,
     },
     photo_id: {
-        type: String,
+        type: SchemaTypes.String,
         required: true
     },
     caption: {
-        type: String,
+        type: SchemaTypes.String,
         required: true
     },
     label: {
-        type: String,
+        type: SchemaTypes.String,
         required: true
     }
 });

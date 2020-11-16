@@ -82,8 +82,6 @@ businessSchema.virtual('checkin', {
     localField: 'business_id',
     foreignField: 'business_id',
     justOne: false,
-    // options: { limit: 5 },
-    // match: { business_id: businessSchema.business_id }
 });
 
 businessSchema.virtual('tip', {
