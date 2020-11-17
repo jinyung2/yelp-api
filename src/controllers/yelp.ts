@@ -174,7 +174,7 @@ class YelpController {
     getBusinessInfo = (req: any, res: Response, next: NextFunction) => {
         let reviewCount = 0;
         let tipCount = 0;
-        Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 } }).limit(20).exec().then((reviews: any) => {
+        Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 } }).limit(20).exec().then((reviews: any[]) => {
             Tip.find({ business_id: req.params.business_id }).limit(100).then((tips: any[]) => {
                 // grab the review and tip with the best sentiment score, perform weighted random
                 let tipsObj: { [index: number]: number } = {};
@@ -190,8 +190,12 @@ class YelpController {
                     }
                 }
                 if (reviews.length > 0) {
-                    reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative + review.useful * 0.5);
-                    review = reviews[+weighted.select(reviewsObj)];
+                    if (reviews.reduce((t, c) => t + c, 0) < 1) {
+                        review = reviews[this.getRandInt(reviews.length)];
+                    } else {
+                        reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative + review.useful * 0.5);
+                        review = reviews[+weighted.select(reviewsObj)];
+                    }
                 }
 
                 res.status(200).json({
