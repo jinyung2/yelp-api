@@ -172,7 +172,7 @@ class YelpController {
      * @param next 
      */
     getBusinessInfo = (req: any, res: Response, next: NextFunction) => {
-        Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 }}).limit(1000).exec().then((reviews: any) => {
+        Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 }}).limit(100).exec().then((reviews: any) => {
             Tip.find({ business_id: req.params.business_id }).limit(100).then((tips: any[]) => {
                 // grab the review and tip with the best sentiment score, perform weighted random
                 let tipsObj: { [index: number]: number } = {};
