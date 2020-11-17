@@ -180,12 +180,14 @@ class YelpController {
                 let tip;
                 let review;
                 if (tips.length > 0) {
-                    tips.forEach((tip: ITip, index: number) => { tipsObj[index] = this.sentiment.analyze(tip.text).comparative + 0.1 });
-                    tip = tips[+weighted.select(tipsObj)];
+                    // tips.forEach((tip: ITip, index: number) => { tipsObj[index] = this.sentiment.analyze(tip.text).comparative + 0.1 });
+                    // tip = tips[+weighted.select(tipsObj)];
+                    tip = tips[0];
                 }
                 if (reviews.length > 0) {
-                    reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative + 0.1);
-                    review = reviews[+weighted.select(reviewsObj)]
+                    // reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative + 0.1);
+                    // review = reviews[+weighted.select(reviewsObj)];
+                    review = reviews[0];
                 }
 
                 res.status(200).json({
