@@ -177,37 +177,31 @@ class YelpController {
         }
         let reviewCount = 0;
         let tipCount = 0;
-        Review.countDocuments({ business_id: req.params.business_id, stars: { $gt: 3.5 } }, (_, rCount) => {
-            Tip.countDocuments({ business_id: req.params.business_id, stars: { $gt: 3.5 } }, (_, tCount) => {
-                tipCount = tCount > 100 ? tCount - 100 : 0;
-                reviewCount = rCount > 10 ? rCount - 10 : 0;
-                Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 } }).skip(getRandInt(reviewCount)).limit(5).exec().then((reviews: any) => {
-                    Tip.find({ business_id: req.params.business_id }).skip(getRandInt(tipCount)).limit(100).then((tips: any[]) => {
-                        // grab the review and tip with the best sentiment score, perform weighted random
-                        let tipsObj: { [index: number]: number } = {};
-                        let reviewsObj: { [index: number]: number } = {};
-                        let tip;
-                        let review;
-                        if (tips.length > 0) {
-                            tips.forEach((tip: ITip, index: number) => { tipsObj[index] = this.sentiment.analyze(tip.text).comparative + 0.1 });
-                            tip = tips[+weighted.select(tipsObj)];
-                        }
-                        if (reviews.length > 0) {
-                            reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative + review.useful * 0.5);
-                            review = reviews[+weighted.select(reviewsObj)];
-                        }
+        Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 } }).limit(20).exec().then((reviews: any) => {
+            Tip.find({ business_id: req.params.business_id }).limit(100).then((tips: any[]) => {
+                // grab the review and tip with the best sentiment score, perform weighted random
+                let tipsObj: { [index: number]: number } = {};
+                let reviewsObj: { [index: number]: number } = {};
+                let tip;
+                let review;
+                if (tips.length > 0) {
+                    tips.forEach((tip: ITip, index: number) => { tipsObj[index] = this.sentiment.analyze(tip.text).comparative + 0.1 });
+                    tip = tips[+weighted.select(tipsObj)];
+                }
+                if (reviews.length > 0) {
+                    reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative + review.useful * 0.5);
+                    review = reviews[+weighted.select(reviewsObj)];
+                }
 
-                        res.status(200).json({
-                            review: review,
-                            tip: tip
-                        })
-                    })
+                res.status(200).json({
+                    review: review,
+                    tip: tip
                 })
-            });
-        });
+            })
+        })
     }
 
-    
+
 }
 
 export default YelpController;
