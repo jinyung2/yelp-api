@@ -13,10 +13,9 @@ class WikiController {
     getArticle(req: any, res: Response, next: NextFunction) {
         const query = req.params.search;
         wiki().page(query).then(page => {
-            res.status(200).json({data: page});
-            // page.html().then((res) => {
-            //     console.log(res);
-            // })
+            page.info().then((response) => {
+                res.status(200).json({data: response});
+            })
         });
     }
 }
