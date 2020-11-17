@@ -172,9 +172,6 @@ class YelpController {
      * @param next 
      */
     getBusinessInfo = (req: any, res: Response, next: NextFunction) => {
-        function getRandInt(max: number): number {
-            return Math.floor(Math.random() * Math.floor(max));
-        }
         let reviewCount = 0;
         let tipCount = 0;
         Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 } }).limit(20).exec().then((reviews: any) => {
@@ -185,8 +182,12 @@ class YelpController {
                 let tip;
                 let review;
                 if (tips.length > 0) {
-                    tips.forEach((tip: ITip, index: number) => { tipsObj[index] = this.sentiment.analyze(tip.text).comparative + 0.1 });
-                    tip = tips[+weighted.select(tipsObj)];
+                    if (tips.reduce((t, c) => t + c, 0) < 1) {
+                        tip = tips[this.getRandInt(tips.length)];
+                    } else {
+                        tips.forEach((tip: ITip, index: number) => { tipsObj[index] = this.sentiment.analyze(tip.text).comparative + 0.1 });
+                        tip = tips[+weighted.select(tipsObj)];
+                    }
                 }
                 if (reviews.length > 0) {
                     reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative + review.useful * 0.5);
@@ -200,7 +201,9 @@ class YelpController {
             })
         })
     }
-
+    getRandInt(max: number): number {
+        return Math.floor(Math.random() * Math.floor(max));
+    }
 
 }
 
