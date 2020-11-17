@@ -172,22 +172,20 @@ class YelpController {
      * @param next 
      */
     getBusinessInfo = (req: any, res: Response, next: NextFunction) => {
-        Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 }}).limit(100).exec().then((reviews: any) => {
-            Tip.find({ business_id: req.params.business_id }).limit(50).then((tips: any[]) => {
+        Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 }}).limit(1000).exec().then((reviews: any) => {
+            Tip.find({ business_id: req.params.business_id }).limit(100).then((tips: any[]) => {
                 // grab the review and tip with the best sentiment score, perform weighted random
                 let tipsObj: { [index: number]: number } = {};
                 let reviewsObj: { [index: number]: number } = {};
                 let tip;
                 let review;
                 if (tips.length > 0) {
-                    // tips.forEach((tip: ITip, index: number) => { tipsObj[index] = this.sentiment.analyze(tip.text).comparative + 0.1 });
-                    // tip = tips[+weighted.select(tipsObj)];
-                    tip = tips[0];
+                    tips.forEach((tip: ITip, index: number) => { tipsObj[index] = this.sentiment.analyze(tip.text).comparative + 0.1 });
+                    tip = tips[+weighted.select(tipsObj)];
                 }
                 if (reviews.length > 0) {
-                    // reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative + 0.1);
-                    // review = reviews[+weighted.select(reviewsObj)];
-                    review = reviews[0];
+                    reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative + 0.1);
+                    review = reviews[+weighted.select(reviewsObj)];
                 }
 
                 res.status(200).json({
