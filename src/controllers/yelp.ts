@@ -182,7 +182,7 @@ class YelpController {
                 let tip;
                 let review;
                 if (tips.length > 0) {
-                    if (tips.reduce((t, c) => t + c, 0) < 1) {
+                    if (tips.reduce((t, c) => t + this.sentiment.analyze(c.text).comparative, 0) < 1) {
                         tip = tips[this.getRandInt(tips.length)];
                     } else {
                         tips.forEach((tip: ITip, index: number) => { tipsObj[index] = this.sentiment.analyze(tip.text).comparative + 0.1 });
@@ -190,7 +190,7 @@ class YelpController {
                     }
                 }
                 if (reviews.length > 0) {
-                    if (reviews.reduce((t, c) => t + c, 0) < 1) {
+                    if (reviews.reduce((t, c) => t + this.sentiment.analyze(c.text).comparative, 0) < 1) {
                         review = reviews[this.getRandInt(reviews.length)];
                     } else {
                         reviews.forEach((review: IReview, index: number) => reviewsObj[index] = this.sentiment.analyze(review.text).comparative + review.useful * 0.5);
