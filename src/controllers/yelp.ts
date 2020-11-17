@@ -172,8 +172,10 @@ class YelpController {
      * @param next 
      */
     getBusinessInfo = (req: any, res: Response, next: NextFunction) => {
-        Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 }}).lean().limit(10).exec().then((reviews: any) => {
-            Tip.find({ business_id: req.params.business_id }).lean().limit(100).then((tips: any[]) => {
+        const reviewSkip = this.getRandInt(2554574 - 10000);
+        const tipSkip = this.getRandInt(478804 - 1000);
+        Review.find({ business_id: req.params.business_id, stars: { $gt: 3.5 }}).skip(reviewSkip).maxScan(10000).lean().limit(10).exec().then((reviews: any) => {
+            Tip.find({ business_id: req.params.business_id }).skip(tipSkip).maxScan(1000).lean().limit(100).then((tips: any[]) => {
                 // grab the review and tip with the best sentiment score, perform weighted random
                 let tipsObj: { [index: number]: number } = {};
                 let reviewsObj: { [index: number]: number } = {};
@@ -194,6 +196,10 @@ class YelpController {
                 })
             })
         })
+    }
+
+    getRandInt(max: number): number {
+        return Math.floor(Math.random() * Math.floor(max));
     }
 }
 
