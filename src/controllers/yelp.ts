@@ -161,6 +161,20 @@ class YelpController {
         })
     }
 
+    /**
+     * Simply returns 10 random businesses from yelp from one particular city
+     * 
+     * @param res returns an array of data of 10 businesses found at random from database
+     */
+    getRandom = (req: any, res: Response, next: NextFunction) => {
+        const city: string = this.getRandInt(2) == 1 ? 'Las Vegas' : 'Toronto';
+        Business.aggregate([{$match: {city: city}}]).sample(10).then((businesses) => {
+            res.status(200).json({data: businesses});
+        }).catch(err => {
+            err.statusCode = 401;
+            next(err);
+        })
+    }
 
     /**
      * Retrieves photo, tips and review for given business id param.
@@ -205,9 +219,12 @@ class YelpController {
             })
         })
     }
+
     getRandInt(max: number): number {
         return Math.floor(Math.random() * Math.floor(max));
     }
+
+
 
 }
 
